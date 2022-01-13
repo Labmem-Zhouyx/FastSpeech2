@@ -55,18 +55,29 @@ def get_vocoder(config, device):
         vocoder.mel2wav.eval()
         vocoder.mel2wav.to(device)
     elif name == "HiFi-GAN":
-        with open("hifigan/config.json", "r") as f:
-            config = json.load(f)
+        if speaker.split('_')[1] == '22k':
+            with open("hifigan/config_22k.json", "r") as f:
+                config = json.load(f)
+        elif speaker.split('_')[1] == '16k':
+            with open("hifigan/config_16k.json", "r") as f:
+                config = json.load(f)
+
         config = hifigan.AttrDict(config)
         vocoder = hifigan.Generator(config)
-        if speaker == "LJSpeech":
-            ckpt = torch.load("hifigan/generator_LJSpeech.pth.tar")
-        elif speaker == "universal":
-            ckpt = torch.load("hifigan/generator_universal.pth.tar")
-        vocoder.load_state_dict(ckpt["generator"])
-        vocoder.eval()
-        vocoder.remove_weight_norm()
-        vocoder.to(device)
+
+        if speaker == "LJSpeech_22k":
+            ckpt = torch.load("/data/trained_model/hifigan/LJSpeech_22k/generator_LJSpeech.pth.tar")
+        elif speaker == "LibriTTS_22k":
+            ckpt = torch.load("/data/trained_model/hifigan/LibriTTS_22k/generator_universal.pth.tar")
+        elif speaker == "AISHELL3_22k":
+            ckpt = torch.load("/data/trained_model/hifigan/AISHELL3_22k/g_03000000")
+        elif speaker == "DataBaker_16k":
+            ckpt = torch.load("/data/trained_model/hifigan/DataBaker_16k/g_xxxxxx")
+
+    vocoder.load_state_dict(ckpt["generator"])
+    vocoder.eval()
+    vocoder.remove_weight_norm()
+    vocoder.to(device)
 
     return vocoder
 

@@ -50,6 +50,10 @@ class Preprocessor:
             config["preprocessing"]["mel"]["mel_fmax"],
         )
 
+        if "subsets" in config:
+            self.train_set = config["subsets"].get("train", None)
+            self.val_set = config["subsets"].get("val", None)
+            self.test_set = config["subsets"].get("test", None)
 
     def build_from_path(self):
         os.makedirs((os.path.join(self.out_dir, "mel")), exist_ok=True)
@@ -58,50 +62,71 @@ class Preprocessor:
         os.makedirs((os.path.join(self.out_dir, "duration")), exist_ok=True)
 
         print("Processing Data ...")
-        out = list()
         n_frames = 0
         pitch_scaler = StandardScaler()
         energy_scaler = StandardScaler()
 
         # Compute pitch, energy, duration, and mel-spectrogram
         speakers = {}
-        for i, speaker in enumerate(tqdm(os.listdir(self.in_dir))):
-            speakers[speaker] = i
-            for wav_name in os.listdir(os.path.join(self.in_dir, speaker)):
-                if ".wav" not in wav_name:
-                    continue
-
-                basename = wav_name.split(".")[0]
-                tg_path = os.path.join(
-                    self.out_dir, "TextGrid", speaker, "{}.TextGrid".format(basename)
-                )
-                if os.path.exists(tg_path):
-                    ret = self.process_utterance(speaker, basename)
-                    if ret is None:
+        i = 0   # index of total speakers (train + val + test)
+        outs = {}
+        # for dset in [self.test_set]:
+        for dset in [self.train_set, self.val_set, self.test_set]:
+            if dset is None:
+                continue
+            dset_dir = os.path.join(self.in_dir, dset)
+            out = list()
+            for speaker in tqdm(os.listdir(dset_dir), desc=dset):
+                speakers[speaker] = i
+                for wav_name in os.listdir(os.path.join(dset_dir, speaker)):
+                    if ".wav" not in wav_name:
                         continue
-                    else:
-                        info, pitch, energy, n = ret
-                    out.append(info)
 
-                if len(pitch) > 0:
-                    pitch_scaler.partial_fit(pitch.reshape((-1, 1)))
-                if len(energy) > 0:
-                    energy_scaler.partial_fit(energy.reshape((-1, 1)))
+                    basename = wav_name.split(".")[0]
+                    tg_path = os.path.join(
+                        self.out_dir, "TextGrid", speaker, "{}.TextGrid".format(basename)
+                    )
 
-                n_frames += n
+                    if os.path.exists(tg_path):
+                        ret = self.process_utterance(dset_dir, speaker, basename)
+                        if ret is None:
+                            continue
+                        else:
+                            info, pitch, energy, n = ret
+                        out.append(info)
+
+                    if len(pitch) > 0:
+                        pitch_scaler.partial_fit(pitch.reshape((-1, 1)))
+                    if len(energy) > 0:
+                        energy_scaler.partial_fit(energy.reshape((-1, 1)))
+
+                    n_frames += n
+                i += 1
+            outs[dset] = out
 
         print("Computing statistic quantities ...")
         # Perform normalization if necessary
         if self.pitch_normalization:
-            pitch_mean = pitch_scaler.mean_[0]
-            pitch_std = pitch_scaler.scale_[0]
+            # For additional testing corpus/set
+            if self.train_set is None and os.path.exists(os.path.join(self.out_dir, "stats.json")):
+                stats = json.load(open(os.path.join(self.out_dir, "stats.json"), 'r'))
+                pitch_mean = stats['pitch'][2]
+                pitch_std = stats['pitch'][3]
+            else:
+                pitch_mean = pitch_scaler.mean_[0]
+                pitch_std = pitch_scaler.scale_[0]
         else:
             # A numerical trick to avoid normalization...
             pitch_mean = 0
             pitch_std = 1
         if self.energy_normalization:
-            energy_mean = energy_scaler.mean_[0]
-            energy_std = energy_scaler.scale_[0]
+            if self.train_set is None and os.path.exists(os.path.join(self.out_dir, "stats.json")):
+                stats = json.load(open(os.path.join(self.out_dir, "stats.json"), 'r'))
+                energy_mean = stats['energy'][2]
+                energy_std = stats['energy'][3]
+            else:
+                energy_mean = energy_scaler.mean_[0]
+                energy_std = energy_scaler.scale_[0]
         else:
             energy_mean = 0
             energy_std = 1
@@ -140,26 +165,23 @@ class Preprocessor:
             )
         )
 
-        random.shuffle(out)
-        out = [r for r in out if r is not None]
-
         # Write metadata
-        with open(os.path.join(self.out_dir, "train.txt"), "w", encoding="utf-8") as f:
-            for m in out[self.val_size :]:
-                f.write(m + "\n")
-        with open(os.path.join(self.out_dir, "val.txt"), "w", encoding="utf-8") as f:
-            for m in out[: self.val_size]:
-                f.write(m + "\n")
+        for dset in outs:
+            out = outs[dset]
+            with open(os.path.join(self.out_dir, f"{dset}.txt"), "w", encoding="utf-8") as f:
+                for m in out:
+                    f.write(m + "\n")
 
-        return out
+        return outs
 
-    def process_utterance(self, speaker, basename):
-        wav_path = os.path.join(self.in_dir, speaker, "{}.wav".format(basename))
-        text_path = os.path.join(self.in_dir, speaker, "{}.lab".format(basename))
+
+    def process_utterance(self, in_dir, speaker, basename):
+        wav_path = os.path.join(in_dir, speaker, "{}.wav".format(basename))
+        text_path = os.path.join(in_dir, speaker, "{}.lab".format(basename))
         tg_path = os.path.join(
             self.out_dir, "TextGrid", speaker, "{}.TextGrid".format(basename)
         )
-
+        
         # Get alignments
         textgrid = tgt.io.read_textgrid(tg_path)
         phone, duration, start, end = self.get_alignment(
@@ -186,6 +208,7 @@ class Preprocessor:
             frame_period=self.hop_length / self.sampling_rate * 1000,
         )
         pitch = pw.stonemask(wav.astype(np.float64), pitch, t, self.sampling_rate)
+
         pitch = pitch[: sum(duration)]
         if np.sum(pitch != 0) <= 1:
             return None

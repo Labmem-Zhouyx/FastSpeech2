@@ -129,7 +129,8 @@ class Generator(torch.nn.Module):
                         h.upsample_initial_channel // (2 ** (i + 1)),
                         k,
                         u,
-                        padding=(k - u) // 2,
+                        padding=(k - u) // 2,  # for 22kHz version
+                        # padding=(u // 2 + u % 2), output_padding=u % 2  # for 16kHz version
                     )
                 )
             )

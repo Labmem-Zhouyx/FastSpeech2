@@ -15,6 +15,7 @@ def prepare_align(config):
     max_wav_value = config["preprocessing"]["audio"]["max_wav_value"]
     cleaners = config["preprocessing"]["text"]["text_cleaners"]
     speaker = "DataBaker"
+    text_withprosody = ""
     with open(os.path.join(in_dir, "ProsodyLabeling", "000001-010000.txt"), encoding="utf-8") as f:
         content = f.readlines()
         num = int(len(content) // 2)
@@ -68,11 +69,11 @@ def _parse_cn_prosody_label(text, pinyin, use_prosody=False):
 
     # prosody boundary tag (SYL: 音节, PWD: 韵律词, PPH: 韵律短语, IPH: 语调短语, SEN: 语句)
     if use_prosody:
-        SYL = ' '
-        PWD = ' #1 '
-        PPH = ' #2 '
-        IPH = ' #3 '
-        SEN = ' #4 '
+        SYL = '-'
+        PWD = ' '
+        PPH = '/'
+        IPH = ','
+        SEN = '.'
     else:
         SYL = PWD = PPH = IPH = SEN = ' '
 

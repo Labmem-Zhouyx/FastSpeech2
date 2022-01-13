@@ -6,10 +6,6 @@ path:
   raw_path: "/data/training_data/raw_data/AISHELL3"
   preprocessed_path: "/data/training_data/preprocessed_data/AISHELL3"
 
-subsets:
-  train: "train"
-  test: "test"
-
 preprocessing:
   val_size: 512
   text:

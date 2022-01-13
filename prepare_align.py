@@ -1,5 +1,5 @@
 import argparse
-
+import os
 import yaml
 
 from preprocessor import ljspeech, aishell3, libritts, databaker
@@ -11,7 +11,12 @@ def main(config):
     if "AISHELL3" in config["dataset"]:
         aishell3.prepare_align(config)
     if "LibriTTS" in config["dataset"]:
-        libritts.prepare_align(config)
+        corpus_path = config["path"]["corpus_path"]
+        raw_path = config["path"]["raw_path"]
+        for dmode, dset in config["subsets"].items():
+            config["path"]["corpus_path"] = os.path.join(corpus_path, dset)
+            config["path"]["raw_path"] = os.path.join(raw_path, dset)
+            libritts.prepare_align(config)
     if "DataBaker" in config["dataset"]:
         databaker.prepare_align(config)
 
