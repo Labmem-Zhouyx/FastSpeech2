@@ -20,7 +20,7 @@ def prepare_align(config):
         content = f.readlines()
         num = int(len(content) // 2)
         for idx in tqdm(range(num)):
-            base_name, rawtext, text = _parse_cn_prosody_label(content[idx * 2], content[idx * 2 + 1], True)
+            base_name, rawtext, text = _parse_cn_prosody_label(content[idx * 2], content[idx * 2 + 1])
 
             wav_path = os.path.join(in_dir, "Wave", "{}.wav".format(base_name))
             if os.path.exists(wav_path):
@@ -39,7 +39,7 @@ def prepare_align(config):
                     f1.write(text)
 
 
-def _parse_cn_prosody_label(text, pinyin, use_prosody=False):
+def _parse_cn_prosody_label(text, pinyin, use_prosody=True):
     """
     Parse label from text and pronunciation lines with prosodic structure labelings
 
