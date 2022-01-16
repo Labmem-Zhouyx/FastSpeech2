@@ -72,7 +72,7 @@ def get_vocoder(config, device):
         elif speaker == "AISHELL3_22k":
             ckpt = torch.load("/data/trained_model/hifigan/AISHELL3_22k/g_03000000")
         elif speaker == "DataBaker_16k":
-            ckpt = torch.load("/data/trained_model/hifigan/DataBaker_16k/g_xxxxxx")
+            ckpt = torch.load("/data/trained_model/hifigan/DataBaker_16k/g_00500000")
 
     vocoder.load_state_dict(ckpt["generator"])
     vocoder.eval()

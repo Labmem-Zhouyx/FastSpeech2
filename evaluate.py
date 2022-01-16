@@ -19,8 +19,11 @@ def evaluate(model, step, configs, logger=None, vocoder=None):
     preprocess_config, model_config, train_config = configs
 
     # Get dataset
+    val_set = "val.txt"
+    if "subsets" in preprocess_config:
+        val_set = preprocess_config["subsets"].get("val", "val") + '.txt'
     dataset = Dataset(
-        "val.txt", preprocess_config, train_config, sort=False, drop_last=False
+        val_set, preprocess_config, train_config, sort=False, drop_last=False
     )
     batch_size = train_config["optimizer"]["batch_size"]
     loader = DataLoader(
