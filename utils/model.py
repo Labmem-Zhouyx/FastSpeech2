@@ -66,13 +66,13 @@ def get_vocoder(config, device):
         vocoder = hifigan.Generator(config)
 
         if speaker == "LJSpeech_22k":
-            ckpt = torch.load("/data/trained_model/hifigan/LJSpeech_22k/generator_LJSpeech.pth.tar")
+            ckpt = torch.load("/apdcephfs/private_yatsenzhou/pretrained/hifigan/LJSpeech_22k/generator_LJSpeech.pth.tar")
         elif speaker == "LibriTTS_22k":
-            ckpt = torch.load("/data/trained_model/hifigan/LibriTTS_22k/generator_universal.pth.tar")
+            ckpt = torch.load("/apdcephfs/private_yatsenzhou/pretrained/hifigan/LibriTTS_22k/generator_universal.pth.tar")
         elif speaker == "AISHELL3_22k":
-            ckpt = torch.load("/data/trained_model/hifigan/AISHELL3_22k/g_03000000")
+            ckpt = torch.load("/apdcephfs/private_yatsenzhou/pretrained/hifigan/AISHELL3_22k/g_03000000")
         elif speaker == "DataBaker_16k":
-            ckpt = torch.load("/data/trained_model/hifigan/DataBaker_16k/g_00500000")
+            ckpt = torch.load("/apdcephfs/private_yatsenzhou/pretrained/hifigan/DataBaker_16k/g_00500000")
 
     vocoder.load_state_dict(ckpt["generator"])
     vocoder.eval()
