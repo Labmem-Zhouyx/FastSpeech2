@@ -118,3 +118,4 @@ TextGrid/
 hifigan/*.pth.tar
 
 start.sh
+submit2jizhi.json
