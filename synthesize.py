@@ -71,6 +71,7 @@ def preprocess_mandarin(text, preprocess_config):
             phones += lexicon[p]
         else:
             phones.append("sp")
+    phones.append("sp")
 
     phones = "{" + " ".join(phones) + "}"
     print("Raw Text Sequence: {}".format(text))
