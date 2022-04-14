@@ -171,6 +171,16 @@ class Preprocessor:
 
         # Read and trim wav files
         wav, _ = librosa.load(wav_path, self.sampling_rate)
+
+        # For training HiFi-GAN
+        wav = wav.astype(np.float32)
+        mel_spectrogram, energy = Audio.tools.get_mel_from_wav(wav, self.STFT)
+        mel_filename = "mel-{}.npy".format(basename)
+        np.save(
+            os.path.join("/data/training_data/raw_data/AISHELL3/", speaker, mel_filename),
+            mel_spectrogram.T,
+        )
+
         wav = wav[
             int(self.sampling_rate * start) : int(self.sampling_rate * end)
         ].astype(np.float32)
@@ -192,6 +202,14 @@ class Preprocessor:
 
         # Compute mel-scale spectrogram and energy
         mel_spectrogram, energy = Audio.tools.get_mel_from_wav(wav, self.STFT)
+
+        # For training HiFi-GAN
+        mel_filename = "mel-{}.npy".format(basename)
+        np.save(
+            os.path.join("/data/training_data/raw_data/AISHELL3/", speaker, mel_filename),
+            mel_spectrogram.T,
+        )
+
         mel_spectrogram = mel_spectrogram[:, : sum(duration)]
         energy = energy[: sum(duration)]
 

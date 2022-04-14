@@ -26,7 +26,7 @@ def prepare_align(config):
                 wav_path = os.path.join(
                     in_dir, speaker, chapter, "{}.wav".format(base_name)
                 )
-                with open(text_path) as f:
+                with open(text_path, encoding="utf-8") as f:
                     text = f.readline().strip("\n")
                 text = _clean_text(text, cleaners)
 
